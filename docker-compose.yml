@@ -65,7 +65,7 @@ services:
     image: nginx:alpine
     container_name: polyglot_frontend
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       # Mount the static directory to nginx's html root. 
       # Since old HTML files reference /static/..., we'll configure nginx to serve from root and update HTML links, 
