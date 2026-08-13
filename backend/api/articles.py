@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, BackgroundTasks, Request, UploadFile, File, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List
+from bson import ObjectId
 from backend.core.db_postgres import get_postgres_db
-from backend.core.db_mongo import get_mongo_db, logs_collection
+from backend.core.db_mongo import get_mongo_db, logs_collection, images_collection
 from backend.core.db_redis import get_redis
 from backend.models import article_postgres, schemas
 from datetime import datetime
@@ -27,6 +29,32 @@ def create_article(article: schemas.ArticleCreate, db: Session = Depends(get_pos
     db.commit()
     db.refresh(new_article)
     return new_article
+
+@router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    # Read file content
+    contents = await file.read()
+    
+    # Save to MongoDB
+    image_data = {
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "data": contents
+    }
+    result = await images_collection.insert_one(image_data)
+    
+    return {"image_id": str(result.inserted_id)}
+
+@router.get("/image/{image_id}")
+async def get_image(image_id: str):
+    try:
+        image = await images_collection.find_one({"_id": ObjectId(image_id)})
+        if not image:
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        return Response(content=image["data"], media_type=image["content_type"])
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image ID")
 
 @router.get("/", response_model=List[schemas.ArticleResponse])
 def get_articles(search: str = None, db: Session = Depends(get_postgres_db), redis_client = Depends(get_redis)):
@@ -53,6 +81,7 @@ def get_articles(search: str = None, db: Session = Depends(get_postgres_db), red
             "content": art.content,
             "author_id": art.author_id,
             "tags": art.tags,
+            "image_id": art.image_id,
             "views": views
         }
         result.append(art_dict)
@@ -85,6 +114,7 @@ def get_article_by_id(
             "content": article.content,
             "author_id": article.author_id,
             "tags": article.tags,
+            "image_id": article.image_id,
             "views": views
         }
     return None

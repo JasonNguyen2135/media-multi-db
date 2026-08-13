@@ -9,3 +9,4 @@ class Article(Base):
     content = Column(Text, nullable=False)
     author_id = Column(Integer, nullable=False) # Refers to MySQL user id loosely
     tags = Column(JSON, default=[]) # Storing tags as JSON array for simplicity
+    image_id = Column(String(255), nullable=True) # MongoDB image ID

@@ -24,6 +24,7 @@ class ArticleCreate(BaseModel):
     content: str
     author_id: int
     tags: Optional[List[str]] = []
+    image_id: Optional[str] = None
 
 class ArticleResponse(BaseModel):
     id: int
@@ -31,6 +32,7 @@ class ArticleResponse(BaseModel):
     content: str
     author_id: int
     tags: Optional[List[str]] = []
+    image_id: Optional[str] = None
     views: int = 0
 
     class Config:

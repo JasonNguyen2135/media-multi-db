@@ -6,6 +6,7 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client["drafts_logs_db"]
 drafts_collection = db["drafts"]
 logs_collection = db["logs"]
+images_collection = db["images"]
 
 def get_mongo_db():
     return db

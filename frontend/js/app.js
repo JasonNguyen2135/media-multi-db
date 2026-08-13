@@ -83,6 +83,7 @@ function renderArticles(articles, container) {
 
     container.innerHTML = articles.map(art => `
         <div class="bg-white p-6 rounded shadow-sm border border-gray-100 hover:shadow-md transition cursor-pointer" onclick="openArticle(${art.id})">
+            ${art.image_id ? `<img src="${API_BASE}/articles/image/${art.image_id}" class="w-full h-48 object-cover rounded mb-4" alt="Article Cover">` : ''}
             <h2 class="text-2xl font-bold text-teal-600 mb-2">${art.title}</h2>
             <div class="flex gap-2 mb-3">
                 ${art.tags.map(t => `<span class="bg-gray-200 text-xs px-2 py-1 rounded text-gray-600">${t}</span>`).join('')}
@@ -129,6 +130,16 @@ async function openArticle(id) {
         document.getElementById('modal-title').innerText = art.title;
         document.getElementById('modal-author').innerText = `Author ID: ${art.author_id}`;
         document.getElementById('modal-views').innerText = `${art.views} Views`;
+        
+        const imageContainer = document.getElementById('modal-image-container');
+        if (imageContainer) {
+            if (art.image_id) {
+                imageContainer.innerHTML = `<img src="${API_BASE}/articles/image/${art.image_id}" class="w-full h-64 object-cover rounded mb-4" alt="Article Cover">`;
+            } else {
+                imageContainer.innerHTML = '';
+            }
+        }
+
         document.getElementById('modal-content').innerText = art.content;
         
         document.getElementById('article-modal').classList.remove('hidden');
@@ -191,13 +202,36 @@ async function publishArticle() {
     }
 
     const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
+    const imageFile = document.getElementById('article-image').files[0];
+    
+    let image_id = null;
+    if (imageFile) {
+        try {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            
+            const uploadRes = await fetch(`${API_BASE}/articles/upload-image`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!uploadRes.ok) throw new Error("Image upload failed");
+            
+            const uploadData = await uploadRes.json();
+            image_id = uploadData.image_id;
+        } catch (error) {
+            alert('Failed to upload image: ' + error.message);
+            return;
+        }
+    }
 
     try {
         await fetchAPI('/articles/', 'POST', {
             title,
             content,
             author_id: currentUser.id,
-            tags
+            tags,
+            image_id
         });
         alert('Article published successfully! (Saved to Postgres)');
         

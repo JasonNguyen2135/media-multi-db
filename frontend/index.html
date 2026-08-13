@@ -52,7 +52,7 @@
     <!-- Article Modal -->
     <div id="article-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
         <div class="relative top-20 mx-auto p-8 border w-3/4 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-start">
+            <div class="flex justify-between items-center mb-2">
                 <h3 id="modal-title" class="text-3xl font-bold text-gray-900 mb-4"></h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,6 +60,7 @@
                     </svg>
                 </button>
             </div>
+            <div id="modal-image-container"></div>
             <div class="text-sm text-gray-500 mb-6 flex gap-4">
                 <span id="modal-author"></span>
                 <span>•</span>
