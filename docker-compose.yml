@@ -48,6 +48,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: polyglot_backend
+    restart: always
     ports:
       - "8000:8000"
     depends_on:

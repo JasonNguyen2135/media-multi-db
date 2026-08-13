@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from core.db_postgres import SessionLocal, engine
-from models.article_postgres import Article
+from backend.core.db_postgres import SessionLocal, engine
+from backend.models.article_postgres import Article
 from pymongo import MongoClient
 import random
 import urllib.request
