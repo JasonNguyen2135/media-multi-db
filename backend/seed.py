@@ -68,9 +68,9 @@ def seed_data():
             print(f"Database already has {count} articles. Skipping seed.")
             return
 
-        print("Generating dummy articles with random images...")
-        for i, data in enumerate(dummy_data):
-            print(f"Downloading image for article {i+1}...")
+        print("Generating 20 dummy articles with random images...")
+        for i in range(20):
+            print(f"Downloading image for article {i+1}/20...")
             img_bytes = download_random_image()
             
             image_id = None
@@ -83,12 +83,22 @@ def seed_data():
                 })
                 image_id = str(mongo_res.inserted_id)
             
-            data["image_id"] = image_id
+            # Pick a random template from dummy_data
+            base_data = random.choice(dummy_data)
+            
+            data = {
+                "title": f"{base_data['title']} (Part {i+1})",
+                "content": base_data['content'] + f"\n\nThis is the auto-generated part {i+1} to demonstrate pagination and massive data rendering.",
+                "author_id": base_data['author_id'],
+                "tags": base_data['tags'],
+                "image_id": image_id
+            }
+            
             article = Article(**data)
             db.add(article)
         
         db.commit()
-        print("Successfully added 5 dummy articles!")
+        print("Successfully added 20 dummy articles!")
     except Exception as e:
         print(f"Error seeding data: {e}")
         db.rollback()
