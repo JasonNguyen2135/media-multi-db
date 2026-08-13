@@ -1,0 +1,43 @@
+# ============================================================
+# docker-compose.prod.yml — Production (CMC Cloud)
+# Chỉ gồm Frontend + Backend.
+# Tất cả DB kết nối tới CMC Cloud DBaaS qua env vars.
+# ============================================================
+
+services:
+
+  backend:
+    image: ${REGISTRY:-yourdockerhub}/media-backend:${TAG:-latest}
+    container_name: prod_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MYSQL_URL=${MYSQL_URL}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - MONGO_URL=${MONGO_URL}
+      - REDIS_URL=${REDIS_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    image: ${REGISTRY:-yourdockerhub}/media-frontend:${TAG:-latest}
+    container_name: prod_frontend
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      # IP của Internal ELB trỏ vào Backend EC
+      # Ví dụ: BACKEND_URL=http://10.0.2.100:8000
+      - BACKEND_URL=${BACKEND_URL}
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

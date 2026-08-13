@@ -1,5 +1,8 @@
-// Tự động lấy IP/Domain hiện tại của web và gọi tới port 8000 (Backend)
-const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8000/api';
+// Production (qua Nginx proxy): API_BASE = '/api'  → Nginx forward sang Internal ELB
+// Development (port 8080): API_BASE = 'http://host:8000/api' → gọi thẳng backend
+const API_BASE = (window.location.port === '8080' || window.location.port === '')
+    ? window.location.protocol + '//' + window.location.hostname + ':8000/api'
+    : '/api';
 
 async function fetchAPI(endpoint, method = 'GET', body = null) {
     const options = {

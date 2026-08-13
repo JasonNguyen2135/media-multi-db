@@ -1,0 +1,11 @@
+# Secrets - KHÔNG BAO GIỜ commit file này lên Git
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Docker
+*.log
