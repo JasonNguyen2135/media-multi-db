@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write Article - Polyglot Blog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <nav class="flex items-center justify-between flex-wrap bg-teal-500 p-6">
+        <div class="flex items-center flex-shrink-0 text-white mr-6">
+            <a href="/frontend/index.html" class="font-semibold text-xl tracking-tight">Polyglot Blog</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-8 max-w-4xl bg-white p-8 rounded shadow-md">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Create New Article</h1>
+            <span id="draft-status" class="text-sm text-gray-500 italic">Unsaved</span>
+        </div>
+        
+        <div class="mb-4">
+            <input type="text" id="article-title" placeholder="Article Title" class="w-full text-2xl border-b-2 border-gray-300 py-2 focus:outline-none focus:border-teal-500 text-gray-800 font-bold">
+        </div>
+        
+        <div class="mb-4">
+            <input type="text" id="article-tags" placeholder="Tags (comma separated)" class="w-full text-sm border border-gray-300 rounded py-2 px-3 focus:outline-none focus:border-teal-500 text-gray-700">
+        </div>
+        
+        <div class="mb-6">
+            <textarea id="article-content" rows="15" placeholder="Write your content here..." class="w-full border border-gray-300 rounded py-3 px-4 focus:outline-none focus:border-teal-500 text-gray-700 text-lg leading-relaxed"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-4">
+            <button onclick="publishArticle()" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded text-lg">
+                Publish Article
+            </button>
+        </div>
+    </div>
+
+    <script src="/frontend/js/api.js"></script>
+    <script src="/frontend/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            if(!currentUser) {
+                window.location.href = '/frontend/login.html';
+                return;
+            }
+            
+            // Auto-save draft every 5 seconds
+            setInterval(autoSaveDraft, 5000);
+            
+            // Listen to typing to change status
+            document.getElementById('article-title').addEventListener('input', () => {
+                document.getElementById('draft-status').innerText = 'Editing...';
+            });
+            document.getElementById('article-content').addEventListener('input', () => {
+                document.getElementById('draft-status').innerText = 'Editing...';
+            });
+        });
+    </script>
+</body>
+</html>
