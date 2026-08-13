@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, JSON
+from sqlalchemy import Column, Integer, String, Text, JSON, Boolean
 from backend.core.db_postgres import Base
 
 class Article(Base):
@@ -7,6 +7,8 @@ class Article(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False, index=True)
     content = Column(Text, nullable=False)
-    author_id = Column(Integer, nullable=False) # Refers to MySQL user id loosely
-    tags = Column(JSON, default=[]) # Storing tags as JSON array for simplicity
-    image_id = Column(String(255), nullable=True) # MongoDB image ID
+    author_id = Column(Integer, nullable=False)          # Refers to MySQL user id
+    author_name = Column(String(100), nullable=True)     # Store username at publish time
+    is_anonymous = Column(Boolean, default=False)        # Hide author identity
+    tags = Column(JSON, default=[])
+    image_id = Column(String(255), nullable=True)        # MongoDB image ID

@@ -1,5 +1,6 @@
 // Global user state
 let currentUser = null;
+let currentArticleId = null;
 
 // --- Auth Functions ---
 function checkAuth() {
@@ -124,12 +125,24 @@ function updateTrending(articles) {
 
 // --- Article Detail & Modal Functions ---
 async function openArticle(id) {
+    currentArticleId = id;
     try {
         const art = await fetchAPI(`/articles/${id}`);
         
         document.getElementById('modal-title').innerText = art.title;
-        document.getElementById('modal-author').innerText = `Author ID: ${art.author_id}`;
+        document.getElementById('modal-author').innerText = `By: ${art.author_name}`;
         document.getElementById('modal-views').innerText = `${art.views} Views`;
+        
+        // Show delete button only to the article's author
+        const deleteBtn = document.getElementById('delete-btn');
+        if (currentUser && currentUser.id === art.author_id && !art.is_anonymous) {
+            deleteBtn.classList.remove('hidden');
+        } else if (currentUser && currentUser.id === art.author_id) {
+            // even anonymous posts can be deleted by real author
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
         
         const imageContainer = document.getElementById('modal-image-container');
         if (imageContainer) {
@@ -142,7 +155,21 @@ async function openArticle(id) {
 
         document.getElementById('modal-content').innerText = art.content;
         
+        // Show/hide comment form based on login status
+        const commentForm = document.getElementById('comment-form');
+        const loginNotice = document.getElementById('comment-login-notice');
+        if (currentUser) {
+            commentForm.classList.remove('hidden');
+            loginNotice.classList.add('hidden');
+        } else {
+            commentForm.classList.add('hidden');
+            loginNotice.classList.remove('hidden');
+        }
+        
         document.getElementById('article-modal').classList.remove('hidden');
+        
+        // Load comments for this article
+        loadComments(id);
         
         // Reload background articles silently to update view counters in UI
         setTimeout(() => loadArticles(), 500); 
@@ -151,8 +178,80 @@ async function openArticle(id) {
     }
 }
 
+async function loadComments(articleId) {
+    const list = document.getElementById('comments-list');
+    if (!list) return;
+    list.innerHTML = '<p class="text-gray-400 text-sm">Loading comments...</p>';
+    
+    try {
+        const comments = await fetchAPI(`/comments/${articleId}`);
+        if (comments.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic">No comments yet. Be the first to comment!</p>';
+            return;
+        }
+        list.innerHTML = comments.map(c => `
+            <div class="flex gap-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
+                    ${c.author_name.charAt(0).toUpperCase()}
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-semibold text-gray-800 text-sm">${c.author_name}</span>
+                        <span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleString()}</span>
+                    </div>
+                    <p class="text-gray-700 text-sm">${c.content}</p>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        list.innerHTML = '<p class="text-red-400 text-sm">Failed to load comments.</p>';
+    }
+}
+
+async function submitComment() {
+    if (!currentUser || !currentArticleId) return;
+    
+    const input = document.getElementById('comment-input');
+    const content = input.value.trim();
+    if (!content) {
+        alert('Please write something before posting!');
+        return;
+    }
+    
+    const isAnonymous = document.getElementById('comment-anonymous').checked;
+    const authorName = isAnonymous ? 'Anonymous' : currentUser.username;
+    
+    try {
+        await fetchAPI(`/comments/${currentArticleId}`, 'POST', {
+            article_id: currentArticleId,
+            author_id: currentUser.id,
+            author_name: authorName,
+            content: content
+        });
+        input.value = '';
+        document.getElementById('comment-anonymous').checked = false;
+        loadComments(currentArticleId);
+    } catch (error) {
+        alert('Failed to post comment: ' + error.message);
+    }
+}
+
+async function deleteArticle() {
+    if (!currentUser || !currentArticleId) return;
+    if (!confirm('Are you sure you want to delete this article? This cannot be undone.')) return;
+    
+    try {
+        await fetchAPI(`/articles/${currentArticleId}?author_id=${currentUser.id}`, 'DELETE');
+        closeModal();
+        loadArticles();
+    } catch (error) {
+        alert('Failed to delete: ' + error.message);
+    }
+}
+
 function closeModal() {
     document.getElementById('article-modal').classList.add('hidden');
+    currentArticleId = null;
 }
 
 // --- Editor Functions (Drafts & Publish) ---
@@ -195,6 +294,7 @@ async function publishArticle() {
     const title = document.getElementById('article-title').value;
     const content = document.getElementById('article-content').value;
     const tagsStr = document.getElementById('article-tags').value;
+    const isAnonymous = document.getElementById('is-anonymous').checked;
     
     if (!title || !content) {
         alert('Title and content are required!');
@@ -230,13 +330,12 @@ async function publishArticle() {
             title,
             content,
             author_id: currentUser.id,
+            author_name: currentUser.username,
+            is_anonymous: isAnonymous,
             tags,
             image_id
         });
         alert('Article published successfully! (Saved to Postgres)');
-        
-        // Optionally clear draft in mongo here
-        
         window.location.href = '/index.html';
     } catch (error) {
         alert('Failed to publish: ' + error.message);

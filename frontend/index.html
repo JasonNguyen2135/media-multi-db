@@ -52,13 +52,16 @@
     <!-- Article Modal -->
     <div id="article-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
         <div class="relative top-20 mx-auto p-8 border w-3/4 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center mb-2">
-                <h3 id="modal-title" class="text-3xl font-bold text-gray-900 mb-4"></h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div class="flex justify-between items-start mb-2">
+                <h3 id="modal-title" class="text-3xl font-bold text-gray-900 mb-4 pr-4"></h3>
+                <div class="flex gap-2 flex-shrink-0">
+                    <button id="delete-btn" onclick="deleteArticle()" class="hidden text-sm bg-red-100 text-red-600 hover:bg-red-200 font-semibold px-3 py-1 rounded transition">🗑 Delete</button>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div id="modal-image-container"></div>
             <div class="text-sm text-gray-500 mb-6 flex gap-4">
@@ -66,7 +69,30 @@
                 <span>•</span>
                 <span id="modal-views" class="text-teal-600 font-semibold"></span>
             </div>
-            <div id="modal-content" class="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap"></div>
+            <div id="modal-content" class="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap mb-8"></div>
+
+            <!-- Comments Section -->
+            <div class="border-t pt-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">💬 Comments</h3>
+                
+                <!-- Add Comment Form -->
+                <div id="comment-form" class="mb-6 hidden">
+                    <textarea id="comment-input" rows="3" placeholder="Write a comment..." class="w-full border rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:border-teal-500 resize-none mb-2"></textarea>
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 select-none">
+                            <input type="checkbox" id="comment-anonymous" class="w-4 h-4 accent-teal-500">
+                            Comment anonymously
+                        </label>
+                        <button onclick="submitComment()" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-lg text-sm font-semibold transition">Post Comment</button>
+                    </div>
+                </div>
+                <p id="comment-login-notice" class="text-sm text-gray-400 italic mb-4 hidden">Please <a href="/login.html" class="text-teal-500 underline">login</a> to comment.</p>
+
+                <!-- Comments List -->
+                <div id="comments-list" class="space-y-4">
+                    <p class="text-gray-400 text-sm">Loading comments...</p>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -23,6 +23,8 @@ class ArticleCreate(BaseModel):
     title: str
     content: str
     author_id: int
+    author_name: Optional[str] = None
+    is_anonymous: bool = False
     tags: Optional[List[str]] = []
     image_id: Optional[str] = None
 
@@ -31,6 +33,8 @@ class ArticleResponse(BaseModel):
     title: str
     content: str
     author_id: int
+    author_name: Optional[str] = None
+    is_anonymous: bool = False
     tags: Optional[List[str]] = []
     image_id: Optional[str] = None
     views: int = 0
@@ -43,3 +47,18 @@ class DraftCreate(BaseModel):
     author_id: int
     draft_data: dict # Unstructured JSON data
 
+
+# --- Comment Schemas (MongoDB) ---
+class CommentCreate(BaseModel):
+    article_id: int
+    author_id: int
+    author_name: str
+    content: str
+
+class CommentResponse(BaseModel):
+    id: str
+    article_id: int
+    author_id: int
+    author_name: str
+    content: str
+    created_at: str
