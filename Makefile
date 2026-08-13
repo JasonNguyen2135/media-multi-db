@@ -55,47 +55,33 @@ push-frontend:
 release: build push
 	@echo "🚀 Images pushed: $(BACKEND_IMG) | $(FRONTEND_IMG)"
 
-# ── Deploy trên EC (chạy lệnh này trực tiếp trên máy chủ) ───
-# Trên Backend EC:
+# Trên Backend EC (chạy cả Backend và 4 DB):
 .PHONY: deploy-backend
 deploy-backend:
 	docker pull $(BACKEND_IMG)
-	docker stop prod_backend 2>/dev/null || true
-	docker rm prod_backend 2>/dev/null || true
-	docker run -d \
-		--name prod_backend \
-		--restart always \
-		--env-file .env \
-		-p 8000:8000 \
-		$(BACKEND_IMG)
-	@echo "✅ Backend deployed"
+	docker compose -f docker-compose.backend.yml up -d
+	@echo "✅ Backend & DBs deployed"
 
 # Trên Frontend EC:
 .PHONY: deploy-frontend
 deploy-frontend:
 	docker pull $(FRONTEND_IMG)
-	docker stop prod_frontend 2>/dev/null || true
-	docker rm prod_frontend 2>/dev/null || true
-	docker run -d \
-		--name prod_frontend \
-		--restart always \
-		--env-file .env \
-		-p 80:80 \
-		$(FRONTEND_IMG)
+	docker compose -f docker-compose.frontend.yml up -d
 	@echo "✅ Frontend deployed"
 
 # ── Logs & Status ────────────────────────────────────────────
 .PHONY: logs-backend
 logs-backend:
-	docker logs -f prod_backend
+	docker compose -f docker-compose.backend.yml logs -f
 
 .PHONY: logs-frontend
 logs-frontend:
-	docker logs -f prod_frontend
+	docker compose -f docker-compose.frontend.yml logs -f
 
 .PHONY: status
 status:
 	docker ps --filter "name=prod_"
+
 
 # ── Help ──────────────────────────────────────────────────────
 .PHONY: help

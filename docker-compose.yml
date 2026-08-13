@@ -57,18 +57,22 @@ services:
       - mongo-db
       - redis-db
     environment:
-      # We override the localhost URLs here using environment variables if we wanted to,
-      # but in this case I will update the python code to use these service names.
       - PYTHONUNBUFFERED=1
+      - MYSQL_URL=mysql+pymysql://root:rootpassword@mysql-db:3306/auth_db
+      - POSTGRES_URL=postgresql://postgres:rootpassword@postgres-db:5432/articles_db
+      - MONGO_URL=mongodb://admin:rootpassword@mongo-db:27017
+      - REDIS_URL=redis://redis-db:6379/0
 
   # --- FRONTEND ---
   frontend:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: polyglot_frontend
     ports:
-      - "8080:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
+      - "80:80"  # Chạy port 80 để api.js dùng '/api' (qua Nginx proxy)
+    environment:
+      - BACKEND_URL=http://backend:8000
     depends_on:
       - backend
 

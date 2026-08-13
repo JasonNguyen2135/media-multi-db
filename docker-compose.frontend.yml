@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    image: polyglot-frontend:latest
+    container_name: prod_frontend
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      # IP của Internal ELB trỏ vào Backend EC
+      # Ví dụ: BACKEND_URL=http://10.0.2.100:8000
+      - BACKEND_URL=${BACKEND_URL}
