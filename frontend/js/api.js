@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:8000/api';
+// Tự động lấy IP/Domain hiện tại của web và gọi tới port 8000 (Backend)
+const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8000/api';
 
 async function fetchAPI(endpoint, method = 'GET', body = null) {
     const headers = {
