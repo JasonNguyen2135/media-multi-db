@@ -23,10 +23,10 @@
         </div>
         
         <div class="flex items-center justify-between">
-            <button onclick="handleLogin()" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full mr-2">
+            <button onclick="loginWithValidation()" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full mr-2">
                 Login
             </button>
-            <button onclick="handleRegister()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full ml-2">
+            <button onclick="registerWithValidation()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full ml-2">
                 Register
             </button>
         </div>
@@ -54,17 +54,14 @@
             return true;
         }
         
-        const _origHandleLogin = handleLogin;
-        const _origHandleRegister = handleRegister;
-        
-        async function handleLogin() {
+        async function loginWithValidation() {
             if (!validateInputs()) return;
-            await _origHandleLogin();
+            await handleLogin(); // Gọi hàm gốc từ app.js
         }
         
-        async function handleRegister() {
+        async function registerWithValidation() {
             if (!validateInputs()) return;
-            await _origHandleRegister();
+            await handleRegister(); // Gọi hàm gốc từ app.js
         }
     </script>
 </body>
