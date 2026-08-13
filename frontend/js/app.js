@@ -130,27 +130,21 @@ async function openArticle(id) {
         const art = await fetchAPI(`/articles/${id}`);
         
         document.getElementById('modal-title').innerText = art.title;
-        document.getElementById('modal-author').innerText = `By: ${art.author_name}`;
-        document.getElementById('modal-views').innerText = `${art.views} Views`;
+        document.getElementById('modal-author').innerText = `By: ${art.author_name || 'Unknown'}`;
+        document.getElementById('modal-views').innerText = `${art.views || 0} Views`;
         
-        // Show delete button only to the article's author
+        // Show delete button only to the article's actual author (safe null check)
         const deleteBtn = document.getElementById('delete-btn');
-        if (currentUser && currentUser.id === art.author_id && !art.is_anonymous) {
-            deleteBtn.classList.remove('hidden');
-        } else if (currentUser && currentUser.id === art.author_id) {
-            // even anonymous posts can be deleted by real author
-            deleteBtn.classList.remove('hidden');
-        } else {
-            deleteBtn.classList.add('hidden');
+        if (deleteBtn) {
+            const isOwner = currentUser && Number(currentUser.id) === Number(art.author_id);
+            isOwner ? deleteBtn.classList.remove('hidden') : deleteBtn.classList.add('hidden');
         }
         
         const imageContainer = document.getElementById('modal-image-container');
         if (imageContainer) {
-            if (art.image_id) {
-                imageContainer.innerHTML = `<img src="${API_BASE}/articles/image/${art.image_id}" class="w-full h-64 object-cover rounded mb-4" alt="Article Cover">`;
-            } else {
-                imageContainer.innerHTML = '';
-            }
+            imageContainer.innerHTML = art.image_id
+                ? `<img src="${API_BASE}/articles/image/${art.image_id}" class="w-full h-64 object-cover rounded mb-4" alt="Article Cover">`
+                : '';
         }
 
         document.getElementById('modal-content').innerText = art.content;
@@ -158,53 +152,62 @@ async function openArticle(id) {
         // Show/hide comment form based on login status
         const commentForm = document.getElementById('comment-form');
         const loginNotice = document.getElementById('comment-login-notice');
-        if (currentUser) {
-            commentForm.classList.remove('hidden');
-            loginNotice.classList.add('hidden');
-        } else {
-            commentForm.classList.add('hidden');
-            loginNotice.classList.remove('hidden');
+        if (commentForm && loginNotice) {
+            if (currentUser) {
+                commentForm.classList.remove('hidden');
+                loginNotice.classList.add('hidden');
+            } else {
+                commentForm.classList.add('hidden');
+                loginNotice.classList.remove('hidden');
+            }
         }
         
         document.getElementById('article-modal').classList.remove('hidden');
         
-        // Load comments for this article
+        // Load comments
         loadComments(id);
         
-        // Reload background articles silently to update view counters in UI
-        setTimeout(() => loadArticles(), 500); 
+        // Silently reload article list to update view counter
+        setTimeout(() => loadArticles(), 500);
     } catch (error) {
-        alert('Failed to load article details.');
+        alert('Failed to load article details: ' + error.message);
     }
 }
 
-async function loadComments(articleId) {
+async function loadComments(articleId, silent = false) {
     const list = document.getElementById('comments-list');
     if (!list) return;
-    list.innerHTML = '<p class="text-gray-400 text-sm">Loading comments...</p>';
+    if (!silent) list.innerHTML = '<p class="text-gray-400 text-sm">Loading comments...</p>';
     
     try {
         const comments = await fetchAPI(`/comments/${articleId}`);
         if (comments.length === 0) {
             list.innerHTML = '<p class="text-gray-400 text-sm italic">No comments yet. Be the first to comment!</p>';
-            return;
-        }
-        list.innerHTML = comments.map(c => `
-            <div class="flex gap-3 p-4 bg-gray-50 rounded-lg">
-                <div class="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
-                    ${c.author_name.charAt(0).toUpperCase()}
-                </div>
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="font-semibold text-gray-800 text-sm">${c.author_name}</span>
-                        <span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleString()}</span>
+        } else {
+            list.innerHTML = comments.map(c => `
+                <div class="flex gap-3 p-4 bg-gray-50 rounded-lg">
+                    <div class="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
+                        ${c.author_name.charAt(0).toUpperCase()}
                     </div>
-                    <p class="text-gray-700 text-sm">${c.content}</p>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-semibold text-gray-800 text-sm">${c.author_name}</span>
+                            <span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleString()}</span>
+                        </div>
+                        <p class="text-gray-700 text-sm">${c.content}</p>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
     } catch (error) {
-        list.innerHTML = '<p class="text-red-400 text-sm">Failed to load comments.</p>';
+        if (!silent) list.innerHTML = '<p class="text-red-400 text-sm">Failed to load comments.</p>';
+    }
+    
+    // Start auto-refresh every 5s while modal is open (only start once)
+    if (!window._commentRefreshTimer && currentArticleId === articleId) {
+        window._commentRefreshTimer = setInterval(() => {
+            if (currentArticleId) loadComments(currentArticleId, true);
+        }, 5000);
     }
 }
 
@@ -237,11 +240,21 @@ async function submitComment() {
 }
 
 async function deleteArticle() {
-    if (!currentUser || !currentArticleId) return;
+    if (!currentUser || !currentArticleId) {
+        alert('Error: Not logged in or no article selected.');
+        return;
+    }
+    
+    const authorId = Number(currentUser.id);
+    if (!authorId) {
+        alert('Error: Invalid user session. Please logout and login again.');
+        return;
+    }
+    
     if (!confirm('Are you sure you want to delete this article? This cannot be undone.')) return;
     
     try {
-        await fetchAPI(`/articles/${currentArticleId}?author_id=${currentUser.id}`, 'DELETE');
+        await fetchAPI(`/articles/${currentArticleId}?author_id=${authorId}`, 'DELETE');
         closeModal();
         loadArticles();
     } catch (error) {
@@ -251,6 +264,11 @@ async function deleteArticle() {
 
 function closeModal() {
     document.getElementById('article-modal').classList.add('hidden');
+    // Stop comment auto-refresh when modal closes
+    if (window._commentRefreshTimer) {
+        clearInterval(window._commentRefreshTimer);
+        window._commentRefreshTimer = null;
+    }
     currentArticleId = null;
 }
 

@@ -112,10 +112,13 @@ def get_article_by_id(
 @router.delete("/{article_id}")
 def delete_article(
     article_id: int,
-    author_id: int,  # passed from frontend to verify ownership
+    author_id: int = None,  # query param to verify ownership
     db: Session = Depends(get_postgres_db),
     redis_client = Depends(get_redis)
 ):
+    if author_id is None:
+        raise HTTPException(status_code=400, detail="author_id is required")
+    
     article = db.query(article_postgres.Article).filter(article_postgres.Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
