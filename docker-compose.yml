@@ -67,10 +67,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      # Mount the static directory to nginx's html root. 
-      # Since old HTML files reference /static/..., we'll configure nginx to serve from root and update HTML links, 
-      # OR mount it directly to /usr/share/nginx/html/static. Let's do the latter for less code changes.
-      - ./static:/usr/share/nginx/html/static
+      - ./frontend:/usr/share/nginx/html
     depends_on:
       - backend
 

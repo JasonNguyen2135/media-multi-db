@@ -23,7 +23,7 @@ function updateNavUser() {
 function logout() {
     localStorage.removeItem('user');
     currentUser = null;
-    window.location.href = '/frontend/index.html';
+    window.location.href = '/index.html';
 }
 
 async function handleLogin() {
@@ -34,7 +34,7 @@ async function handleLogin() {
     try {
         const user = await fetchAPI('/auth/login', 'POST', { username: usernameInput, password: passwordInput });
         localStorage.setItem('user', JSON.stringify(user));
-        window.location.href = '/frontend/index.html';
+        window.location.href = '/index.html';
     } catch (error) {
         errorMsg.innerText = error.message;
         errorMsg.classList.remove('hidden');
@@ -49,7 +49,7 @@ async function handleRegister() {
     try {
         const user = await fetchAPI('/auth/register', 'POST', { username: usernameInput, password: passwordInput });
         localStorage.setItem('user', JSON.stringify(user));
-        window.location.href = '/frontend/index.html';
+        window.location.href = '/index.html';
     } catch (error) {
         errorMsg.innerText = error.message;
         errorMsg.classList.remove('hidden');
@@ -203,7 +203,7 @@ async function publishArticle() {
         
         // Optionally clear draft in mongo here
         
-        window.location.href = '/frontend/index.html';
+        window.location.href = '/index.html';
     } catch (error) {
         alert('Failed to publish: ' + error.message);
     }
