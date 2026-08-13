@@ -1,6 +1,6 @@
-// Production (qua Nginx proxy): API_BASE = '/api'  → Nginx forward sang Internal ELB
-// Development (port 8080): API_BASE = 'http://host:8000/api' → gọi thẳng backend
-const API_BASE = (window.location.port === '8080' || window.location.port === '')
+// Production (Port 80/443 qua Nginx proxy): API_BASE = '/api'
+// Development (Port 8080): API_BASE = 'http://host:8000/api'
+const API_BASE = (window.location.port === '8080')
     ? window.location.protocol + '//' + window.location.hostname + ':8000/api'
     : '/api';
 
