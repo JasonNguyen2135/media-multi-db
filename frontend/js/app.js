@@ -3,11 +3,19 @@ let currentUser = null;
 let currentArticleId = null;
 
 // --- Auth Functions ---
-function checkAuth() {
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-        currentUser = JSON.parse(userJson);
+async function checkAuth() {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+        // Gọi API /me để Backend giải mã Token và trả về thông tin user
+        // Không còn bốc thông tin từ localStorage nữa!
+        currentUser = await fetchAPI('/auth/me');
         updateNavUser();
+    } catch (error) {
+        // Token hết hạn hoặc sai -> xóa đi
+        removeToken();
+        currentUser = null;
     }
 }
 
@@ -22,7 +30,7 @@ function updateNavUser() {
 }
 
 function logout() {
-    localStorage.removeItem('user');
+    removeToken();
     currentUser = null;
     window.location.href = '/index.html';
 }
@@ -33,8 +41,9 @@ async function handleLogin() {
     const errorMsg = document.getElementById('error-msg');
 
     try {
-        const user = await fetchAPI('/auth/login', 'POST', { username: usernameInput, password: passwordInput });
-        localStorage.setItem('user', JSON.stringify(user));
+        const result = await fetchAPI('/auth/login', 'POST', { username: usernameInput, password: passwordInput });
+        // Chỉ lưu Token vào sessionStorage, KHÔNG lưu id/username/role
+        setToken(result.access_token);
         window.location.href = '/index.html';
     } catch (error) {
         errorMsg.innerText = error.message;
@@ -48,8 +57,9 @@ async function handleRegister() {
     const errorMsg = document.getElementById('error-msg');
 
     try {
-        const user = await fetchAPI('/auth/register', 'POST', { username: usernameInput, password: passwordInput });
-        localStorage.setItem('user', JSON.stringify(user));
+        const result = await fetchAPI('/auth/register', 'POST', { username: usernameInput, password: passwordInput });
+        // Chỉ lưu Token vào sessionStorage, KHÔNG lưu id/username/role
+        setToken(result.access_token);
         window.location.href = '/index.html';
     } catch (error) {
         errorMsg.innerText = error.message;
@@ -330,6 +340,9 @@ async function publishArticle() {
             
             const uploadRes = await fetch(`${API_BASE}/articles/upload-image`, {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: formData
             });
             

@@ -4,11 +4,30 @@ const API_BASE = (window.location.port === '8080')
     ? window.location.protocol + '//' + window.location.hostname + ':8000/api'
     : '/api';
 
+// Lấy Token từ sessionStorage (an toàn hơn localStorage — tự xóa khi đóng tab)
+function getToken() {
+    return sessionStorage.getItem('token');
+}
+
+function setToken(token) {
+    sessionStorage.setItem('token', token);
+}
+
+function removeToken() {
+    sessionStorage.removeItem('token');
+}
+
 async function fetchAPI(endpoint, method = 'GET', body = null) {
     const options = {
         method,
         headers: {},
     };
+
+    // Tự động gắn JWT Token vào mọi request (nếu đã đăng nhập)
+    const token = getToken();
+    if (token) {
+        options.headers['Authorization'] = `Bearer ${token}`;
+    }
 
     if (body) {
         options.headers['Content-Type'] = 'application/json';
@@ -19,12 +38,17 @@ async function fetchAPI(endpoint, method = 'GET', body = null) {
         const response = await fetch(`${API_BASE}${endpoint}`, options);
         if (!response.ok) {
             const errorData = await response.json();
-            // FastAPI validation errors return {detail: [{msg: ...}]}, others return {detail: "string"}
             let msg = 'Something went wrong';
             if (typeof errorData.detail === 'string') {
                 msg = errorData.detail;
             } else if (Array.isArray(errorData.detail) && errorData.detail.length > 0) {
                 msg = errorData.detail.map(e => e.msg).join(', ');
+            }
+            // Nếu Token hết hạn hoặc bị sai -> tự động logout
+            if (response.status === 401) {
+                removeToken();
+                window.location.href = '/login.html';
+                return;
             }
             throw new Error(msg);
         }

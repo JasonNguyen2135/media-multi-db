@@ -36,8 +36,8 @@
     <script src="/js/app.js?v=2"></script>
     <script>
         // Redirect to home if already logged in
-        const existingUser = localStorage.getItem('user');
-        if (existingUser) {
+        const existingToken = sessionStorage.getItem('token');
+        if (existingToken) {
             window.location.href = '/index.html';
         }
         
