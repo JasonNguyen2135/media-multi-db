@@ -12,3 +12,4 @@ class Article(Base):
     is_anonymous = Column(Boolean, default=False)        # Hide author identity
     tags = Column(JSON, default=[])
     image_id = Column(String(255), nullable=True)        # MongoDB image ID
+    views = Column(Integer, default=0)                   # Sync from Redis ZSET

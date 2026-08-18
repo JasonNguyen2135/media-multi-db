@@ -80,8 +80,8 @@ def get_articles(search: str = None, db: Session = Depends(get_postgres_db), red
     
     result = []
     for art in articles:
-        view_count = redis_client.get(f"article_view:{art.id}")
-        views = int(view_count) if view_count else 0
+        view_count = redis_client.zscore("article_views", str(art.id))
+        views = int(view_count) if view_count else (art.views or 0)
         result.append(article_to_dict(art, views))
         
     return result
@@ -98,14 +98,14 @@ def get_article_by_id(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     
-    # Increment view count in Redis
-    redis_client.incr(f"article_view:{article.id}")
+    # Increment view count in Redis ZSET
+    redis_client.zincrby("article_views", 1, str(article.id))
     
     # Async Log view to MongoDB
     background_tasks.add_task(log_article_view, article.id, request)
     
-    view_count = redis_client.get(f"article_view:{article.id}")
-    views = int(view_count) if view_count else 0
+    view_count = redis_client.zscore("article_views", str(article.id))
+    views = int(view_count) if view_count else (article.views or 0)
     
     return article_to_dict(article, views)
 
@@ -128,8 +128,25 @@ def delete_article(
     # Delete from Postgres
     db.delete(article)
     db.commit()
-    
-    # Clean up view count from Redis
-    redis_client.delete(f"article_view:{article_id}")
+    # Clean up view count from Redis ZSET
+    redis_client.zrem("article_views", str(article_id))
     
     return {"message": "Article deleted successfully"}
+
+@router.post("/admin/sync-views")
+def sync_views_to_postgres(db: Session = Depends(get_postgres_db), redis_client = Depends(get_redis)):
+    # Lấy toàn bộ dữ liệu từ ZSET
+    all_views = redis_client.zrange("article_views", 0, -1, withscores=True)
+    updated_count = 0
+    for article_id_bytes, score in all_views:
+        article_id = int(article_id_bytes)
+        views = int(score)
+        
+        # Cập nhật vào Postgres
+        article = db.query(article_postgres.Article).filter(article_postgres.Article.id == article_id).first()
+        if article and article.views != views:
+            article.views = views
+            updated_count += 1
+            
+    db.commit()
+    return {"message": f"Successfully synced {updated_count} articles to PostgreSQL"}
