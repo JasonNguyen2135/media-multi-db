@@ -42,7 +42,7 @@ async function fetchAPI(endpoint, method = 'GET', body = null) {
             if (typeof errorData.detail === 'string') {
                 msg = errorData.detail;
             } else if (Array.isArray(errorData.detail) && errorData.detail.length > 0) {
-                msg = errorData.detail.map(e => e.msg).join(', ');
+                msg = errorData.detail.map(e => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ');
             }
             // Nếu Token hết hạn hoặc bị sai -> tự động logout
             if (response.status === 401) {

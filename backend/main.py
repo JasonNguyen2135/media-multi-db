@@ -36,6 +36,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+@app.middleware("http")
+async def add_cache_control_header(request: Request, call_next):
+    response = await call_next(request)
+    # Cấm Cloudflare hoặc bất kỳ CDN nào cache API
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
+
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth (MySQL)"])
 app.include_router(articles.router, prefix="/api/articles", tags=["Articles (Postgres & Redis)"])
